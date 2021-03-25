@@ -13,6 +13,7 @@ setup(
     description='Fit&Healthy 365 calender app',
     install_requires=[
         'flask',
-        'mysql-connector-python'
+        'mysql-connector-python',
+        'flask-bootstrap'
       ]
 )
