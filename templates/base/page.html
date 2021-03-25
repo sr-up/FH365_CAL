@@ -1,0 +1,35 @@
+{% extends "bootstrap/base.html" %}
+
+
+{% block head %}
+    {{ super() }}
+<link rel="shortcut icon" href="{{ url_for('.static', filename='img/favicon.png') }}"
+    type="image/x-icon">
+<link rel="icon" href="{{ url_for('.static', filename='img/favicon.png') }}"
+    type="image/x-icon">
+{% endblock %}
+
+
+{% block styles %}
+    {{super()}}
+<link rel="stylesheet"
+      href="{{ url_for('.static', filename='css/nav.css') }}">
+{% endblock %}
+
+
+{% block title %}Fit + Healthy 365{% endblock %}
+
+
+{% block navbar %}
+    {% include "base/navbar.html" %}
+{% endblock %}
+
+
+{% block content %}
+<div class="container">
+    {% block page_content %}{% endblock %}
+</div>
+    {% block footer %}
+        {% include "base/footer.html" %}
+    {% endblock %}
+{% endblock %}
