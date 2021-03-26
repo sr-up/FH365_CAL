@@ -11,6 +11,7 @@ setup(
     author='Sr.up',
     author_email='Ncicartier@gmail.com',
     description='Fit&Healthy 365 calender app',
+    python_requires='>=3.8',
     install_requires=[
         'flask',
         'mysql-connector-python',
