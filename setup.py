@@ -4,8 +4,11 @@ from setuptools import setup
 
 setup(
     name='FH365',
-    version='0.1',
-    packages=['FitCalender'],
+    version='0.2',
+    packages=[
+        'FitCalender',
+        'Tools'
+    ],
     url='',
     license='',
     author='Sr.up',
@@ -15,6 +18,6 @@ setup(
     install_requires=[
         'flask',
         'mysql-connector-python',
-        'flask-bootstrap'
+        'flask_bootstrap'
       ]
 )

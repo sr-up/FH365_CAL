@@ -18,7 +18,7 @@ class SQLError(Exception):
 
 
 class UseDatabase(ABC):
-    """ABC Context Manager that handles connecting to and entering database context"""
+    """ABC (Abstract Base Class) Context Manager that handles connecting to and entering database context"""
     def __init__(self, config: dict) -> None:
         self.configuration = config
 
@@ -33,8 +33,7 @@ class UseDatabase(ABC):
             raise CredentialError(err)
 
     @abstractmethod
-    def __exit__(self, exc_type, exc_val, exc_tb) -> 'cursor':
-        pass
+    def __exit__(self, exc_type, exc_val, exc_tb) -> 'cursor': pass
 
 
 class ConnectDatabase(UseDatabase):

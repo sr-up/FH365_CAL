@@ -3,6 +3,20 @@
 
 {% block page_content %}
 <div>
-    {{ calendar|safe }}
+    <div style="width: 100%; display: table;">
+        <div style="display: table-row">
+            <div style="width: 600px; display: table-cell;">
+                <h1>{{ name }}</h1>
+                <p>{{ description }}</p>
+            </div>
+            <div style="display: table-cell;">
+                <h2>Challenge Points: {{ points }} </h2>
+            </div>
+        </div>
+    </div>
+
+    <hr>
+    <p><small>{% include "calendar_guide.html" %}</small></p>
+    {{ calendar | safe }}
 </div>
 {% endblock %}
