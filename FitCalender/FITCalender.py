@@ -4,7 +4,7 @@ import calendar
 from datetime import datetime
 
 
-def calender_html(year: int = None, month: int = None, events: list = None):
+def calender_html(month: int = None, year: int = None, events: list = None):
     class FITCalendar(calendar.HTMLCalendar):
         """"
         Creates a monthly calendar to track date events
@@ -12,12 +12,19 @@ def calender_html(year: int = None, month: int = None, events: list = None):
 
         def __init__(self,
                      current_day: int,
+                     the_month: int,
+                     the_year: int,
                      event_dates: list = None,
                      event_color='#9e1f63'):
             super().__init__(calendar.SUNDAY)
             self._current_day = current_day
+            self._month = the_month
+            self._year = the_year
             self._event_dates = event_dates if event_dates else list()
             self._event_color = event_color
+
+        def generate(self):
+            return self.formatmonth(self._year, self._month)
 
         def formatweekday(self, day):
             """
@@ -84,10 +91,8 @@ def calender_html(year: int = None, month: int = None, events: list = None):
         today = None
 
     if events:
-        days = [d.day for d in events if d.month == month and d.year == year]
+        completed_days = [d.day for d in events if d.month == month and d.year == year]
     else:
-        days = None
+        completed_days = None
 
-    html_cal = FITCalendar(today, days)
-    month_cal = html_cal.formatmonth(year, month)
-    return month_cal
+    return FITCalendar(today, month, year, completed_days).generate()

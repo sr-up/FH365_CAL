@@ -46,18 +46,21 @@ def challenge_calendar(cid):
     uid = session.get('uid')
     if not uid:
         abort(401)
-    receive = Connector(app.config['database'])
-    
-    header = receive.fetch_challenge_header(cid)
-    habits = receive.fetch_challenge_habits(uid, cid)
+    channel = Connector(app.config['database'])
+
+    header = channel.fetch_challenge_header(cid)
+    habits = channel.fetch_challenge_habits(uid, cid)
     challenge_name, challenge_description = header \
         if header and habits \
         else abort(404)
 
-    dates = receive.fetch_challenge_events(uid, cid)
+    dates = channel.fetch_challenge_events(uid, cid)
     points = len(dates)
 
-    cal = calender_html(events=dates)
+    month = maybe_month(request.args.get('month'))
+    year = maybe_year(request.args.get('year'))
+
+    cal = calender_html(month, year, events=dates)
 
     return render_template('index.html',
                            name=challenge_name,
@@ -66,6 +69,44 @@ def challenge_calendar(cid):
                            calendar=cal,
                            uid=uid,
                            cid=cid, )
+
+
+def maybe_year(to_test):
+    """
+    returns year number if valid, None if empty
+    aborts with 404 if not valid
+    """
+    if not to_test:
+        return None
+
+    if to_test.isdigit():
+        year = int(to_test)
+    else:
+        abort(404)
+
+    if year <= 0:
+        abort(404)
+
+    return year
+
+
+def maybe_month(to_test):
+    """
+    returns month number if valid, None if empty
+    aborts with 404 if not valid
+    """
+    if not to_test:
+        return None
+
+    if to_test.isdigit():
+        month = int(to_test)
+    else:
+        abort(404)
+
+    if month < 1 or month > 12:
+        abort(404)
+
+    return month
 
 
 @app.errorhandler(404)
