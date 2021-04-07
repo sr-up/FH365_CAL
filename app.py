@@ -5,7 +5,7 @@ from flask import Flask, render_template, request, session, url_for, redirect, a
 from flask_bootstrap import Bootstrap
 
 from FitCalender.FITCalender import calender_html
-from Tools.DBcm import ConnectDatabase
+from Tools.DBcm import ConnectDatabase, BeginDatabase
 
 app = Flask(__name__.split('.')[0])
 
@@ -47,6 +47,23 @@ def fetch_challenge_events(cid: int, uid: int) -> list:
         return dates
 
 
+def delete_challenge_event(cid: int, uid: int, date: str):
+    with BeginDatabase(app.config['database']) as cursor:
+        _SQL = 'DELETE FROM challenge_event ' \
+               'WHERE person_id = %s' \
+               ' AND challenge_id = %s' \
+               ' AND event_date = %s'
+        cursor.execute(_SQL, (uid, cid, date))
+
+
+def insert_challenge_event(cid: int, uid: int, date: str):
+    with BeginDatabase(app.config['database']) as cursor:
+        _SQL = 'INSERT INTO challenge_event ' \
+               '(person_id, challenge_id, event_date)' \
+               'VALUES (%s, %s , %s)'
+        cursor.execute(_SQL, (uid, cid, date))
+
+
 def flatten(not_flat):
     flat = list(chain.from_iterable(not_flat))
     return flat
@@ -58,10 +75,11 @@ def challenge_calendar_submit() -> 'html':
     uid = request.form.get('uid')
 
     if session.get('uid') == uid:
-        if request.form.get('delete'):
-            pass
-        if request.form.get('create'):
-            pass
+        do_type = request.form.get('modify')
+        if do_type == 'delete':
+            delete_challenge_event(cid, uid, request.form.get('date'))
+        elif do_type == 'insert':
+            insert_challenge_event(cid, uid, request.form.get('date'))
 
     if cid and uid:
         session['uid'] = uid
@@ -88,7 +106,8 @@ def challenge_calendar(cid) -> 'html':
                            name=challenge_name,
                            description=challenge_description,
                            points=points,
-                           calendar=cal, )
+                           calendar=cal,
+                           cid=cid, uid=uid)
 
 
 @app.errorhandler(404)
