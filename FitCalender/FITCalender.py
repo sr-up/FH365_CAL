@@ -4,15 +4,16 @@ import calendar
 from datetime import datetime
 
 
-def calender_html(year: int = None, month: int = None, events: list = None) -> 'html':
+def calender_html(year: int = None, month: int = None, events: list = None):
     class FITCalendar(calendar.HTMLCalendar):
         """"
         Creates a monthly calendar to track date events
         """
+
         def __init__(self,
                      current_day: int,
                      event_dates: list = None,
-                     event_color: str = '#9e1f63'):
+                     event_color='#9e1f63'):
             super().__init__(calendar.SUNDAY)
             self._current_day = current_day
             self._event_dates = event_dates if event_dates else list()
@@ -31,6 +32,11 @@ def calender_html(year: int = None, month: int = None, events: list = None) -> '
             """
             return self.make_day_cell(day, weekday, self.day_string(day))
 
+        def day_string(self, day):
+            return '<strong>%d</strong>' % day \
+                if day == self._current_day \
+                else '%d' % day
+
         def make_day_cell(self, day, weekday, day_string):
             if day == 0:
                 # day outside month
@@ -44,13 +50,6 @@ def calender_html(year: int = None, month: int = None, events: list = None) -> '
                 return '<td class="%s">%s</td>' % (
                     self.cssclasses[weekday],
                     day_string)
-
-        def day_string(self, day):
-            if day == self._current_day:
-                day_string = '<strong>%d</strong>' % day
-            else:
-                day_string = '%d' % day
-            return day_string
 
         def formatmonth(self, theyear, themonth, withyear=True):
             """
@@ -73,18 +72,22 @@ def calender_html(year: int = None, month: int = None, events: list = None) -> '
             return ''.join(v)
 
     current_date = datetime.today()
+
     if not year:
         year = current_date.year
     if not month:
         month = current_date.month
+
     if current_date.year == year and current_date.month == month:
         today = current_date.day
     else:
         today = None
+
     if events:
         days = [d.day for d in events if d.month == month and d.year == year]
     else:
         days = None
+
     html_cal = FITCalendar(today, days)
     month_cal = html_cal.formatmonth(year, month)
     return month_cal
