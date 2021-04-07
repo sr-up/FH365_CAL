@@ -11,7 +11,6 @@ app = Flask(__name__.split('.')[0])
 
 bootstrap = Bootstrap(app)
 
-
 app.config['database'] = {'host': '127.0.0.1',
                           'user': 'fit365',
                           'password': 'fit365',
@@ -72,6 +71,12 @@ def challenge_calendar() -> 'html':
 def page_not_found(e) -> 'html':
     return render_template('error/404.html',
                            error=e.description), 404
+
+
+@app.errorhandler(401)
+def page_not_found(e) -> 'html':
+    return render_template('error/401.html',
+                           error=e.description), 401
 
 
 @app.errorhandler(500)
