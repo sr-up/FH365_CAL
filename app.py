@@ -1,13 +1,16 @@
 #  Copyright (c) 2021. fit&healthy 365
 from itertools import chain
 
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, session, url_for, redirect, abort
 from flask_bootstrap import Bootstrap
 
 from FitCalender.FITCalender import calender_html
 from Tools.DBcm import ConnectDatabase
 
 app = Flask(__name__.split('.')[0])
+
+# use os.urandom(24) to generate
+app.secret_key = b'\x15\xe9\xda\x94\x9c\xb7\x96\x19\x87[3\x95\xb2\xe6=f\xbe\x88\xc6\xf2\xa6\x8f\x02\x94'
 
 bootstrap = Bootstrap(app)
 
@@ -50,11 +53,32 @@ def flatten(not_flat):
 
 
 @app.route('/calendar', methods=['POST'])
-def challenge_calendar() -> 'html':
+def challenge_calendar_submit() -> 'html':
     cid = request.form.get('cid')
     uid = request.form.get('uid')
 
-    challenge_name, challenge_description = fetch_challenge_header(cid)
+    if session.get('uid') == uid:
+        if request.form.get('delete'):
+            pass
+        if request.form.get('create'):
+            pass
+
+    if cid and uid:
+        session['uid'] = uid
+
+    return redirect(url_for('challenge_calendar', cid=cid))
+
+
+@app.route('/calendar/<cid>', methods=['GET'])
+def challenge_calendar(cid) -> 'html':
+    uid = session.get('uid')
+    if not uid:
+        abort(401)
+
+    header = fetch_challenge_header(cid)
+    habits = fetch_challenge_habits(cid, uid)
+    challenge_name, challenge_description = header if header and habits else abort(404)
+
     dates = fetch_challenge_events(cid, uid)
     points = len(dates)
 
