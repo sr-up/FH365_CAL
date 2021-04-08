@@ -1,11 +1,12 @@
 #  Copyright (c) 2021. fit&healthy 365
-from itertools import chain
+
+from datetime import datetime
 
 from flask import Flask, render_template, request, session, url_for, redirect, abort
 from flask_bootstrap import Bootstrap
 
 from FitCalender.FITCalender import calender_html
-from Tools.DBcm import ConnectDatabase
+from Tools.DBcm import Connector
 
 app = Flask(__name__.split('.')[0])
 
@@ -20,91 +21,133 @@ app.config['database'] = {'host': '127.0.0.1',
                           'database': 'databank'}
 
 
-def fetch_challenge_header(cid: int) -> tuple:
-    with ConnectDatabase(app.config['database']) as cursor:
-        _SQL = 'SELECT name, description FROM challenge WHERE id = %s'
-        cursor.execute(_SQL, (cid,))
-        return cursor.fetchone()
+@app.route('/calendar/submit', methods=['POST'])
+def challenge_calendar_submit():
+    uid, cid, year, month = session['uid'], \
+                            session['cid'], \
+                            session['year'], \
+                            session['month']
+    day, action = request.form.get('day'), request.form.get('action')
 
+    date_string = '-'.join(str(date_part) for date_part in (year, month, day))
 
-def fetch_challenge_habits(cid: int, uid: int) -> tuple:
-    with ConnectDatabase(app.config['database']) as cursor:
-        _SQL = 'SELECT habit1, habit2 ' \
-               'FROM person_challenge ' \
-               'WHERE person_id = %s AND challenge_id = %s'
-        cursor.execute(_SQL, (uid, cid))
-        return cursor.fetchone()
+    date_id = (uid, cid, date_string)
+    control = Connector(app.config['database'])
 
+    if action == 'delete':
+        control.delete_challenge_event(*date_id)
+    elif action == 'insert':
+        control.insert_challenge_event(*date_id)
 
-def fetch_challenge_events(cid: int, uid: int) -> list:
-    with ConnectDatabase(app.config['database']) as cursor:
-        _SQL = 'SELECT event_date ' \
-               'FROM challenge_event ' \
-               'WHERE person_id = %s AND challenge_id = %s'
-        cursor.execute(_SQL, (uid, cid))
-        rows = cursor.fetchall()
-        dates = flatten(rows)
-        return dates
-
-
-def flatten(not_flat):
-    flat = list(chain.from_iterable(not_flat))
-    return flat
+    return redirect(url_for('challenge_calendar_show', cid=cid))
 
 
 @app.route('/calendar', methods=['POST'])
-def challenge_calendar_submit() -> 'html':
+def challenge_calendar_startup():
     cid = request.form.get('cid')
     uid = request.form.get('uid')
 
-    if session.get('uid') == uid:
-        if request.form.get('delete'):
-            pass
-        if request.form.get('create'):
-            pass
-
-    if cid and uid:
+    if uid and cid:
         session['uid'] = uid
 
-    return redirect(url_for('challenge_calendar', cid=cid))
+    return redirect(url_for('challenge_calendar_show', cid=cid))
 
 
 @app.route('/calendar/<cid>', methods=['GET'])
-def challenge_calendar(cid) -> 'html':
+def challenge_calendar_show(cid):
     uid = session.get('uid')
     if not uid:
         abort(401)
+    channel = Connector(app.config['database'])
 
-    header = fetch_challenge_header(cid)
-    habits = fetch_challenge_habits(cid, uid)
-    challenge_name, challenge_description = header if header and habits else abort(404)
+    header = channel.fetch_challenge_header(cid)
+    habits = channel.fetch_challenge_habits(uid, cid)
+    challenge_name, challenge_description = header \
+        if header and habits \
+        else abort(404)
 
-    dates = fetch_challenge_events(cid, uid)
+    dates = channel.fetch_challenge_events(uid, cid)
     points = len(dates)
 
-    cal = calender_html(events=dates)
+    year = maybe_year(request.args.get('year'))
+    if not year:
+        year = session['year']
+    if not year:
+        year = datetime.today().year
+
+    month = maybe_month(request.args.get('month'))
+    if not month:
+        month = session['month']
+    if not month:
+        month = datetime.today().month
+
+    session['year'] = year
+    session['month'] = month
+    session['cid'] = cid
+
+    cal = calender_html(events=dates, year=year, month=month)
 
     return render_template('index.html',
                            name=challenge_name,
                            description=challenge_description,
                            points=points,
-                           calendar=cal, )
+                           calendar=cal,
+                           uid=uid,
+                           cid=cid, )
+
+
+def maybe_year(to_test):
+    """
+    returns year number if valid, None if empty
+    aborts with 404 if not valid
+    """
+    if not to_test:
+        return None
+
+    if to_test.isdigit():
+        year = int(to_test)
+    else:
+        abort(404)
+
+    if year <= 0:
+        abort(404)
+
+    return year
+
+
+def maybe_month(to_test):
+    """
+    returns month number if valid, None if empty
+    aborts with 404 if not valid
+    """
+    if not to_test:
+        return None
+
+    if to_test.isdigit():
+        month = int(to_test)
+    else:
+        abort(404)
+
+    if month < 1 or month > 12:
+        abort(404)
+
+    return month
 
 
 @app.errorhandler(404)
-def page_not_found(e) -> 'html':
+def page_not_found(e):
     return render_template('error/404.html',
                            error=e.description), 404
 
 
 @app.errorhandler(401)
-def page_not_found(e) -> 'html':
+def page_not_found(e):
     return render_template('error/401.html',
                            error=e.description), 401
 
 
 @app.errorhandler(500)
-def internal_server_error(e) -> 'html':
+def internal_server_error(e):
     return render_template('error/500.html',
                            error=e.description), 500
 

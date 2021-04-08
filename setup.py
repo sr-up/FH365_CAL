@@ -4,7 +4,7 @@ from setuptools import setup
 
 setup(
     name='FH365',
-    version='0.2',
+    version='0.3',
     packages=[
         'FitCalender',
         'Tools'
