@@ -1,5 +1,7 @@
 #  Copyright (c) 2021. fit&healthy 365
 
+from datetime import datetime
+
 from flask import Flask, render_template, request, session, url_for, redirect, abort
 from flask_bootstrap import Bootstrap
 
@@ -19,30 +21,40 @@ app.config['database'] = {'host': '127.0.0.1',
                           'database': 'databank'}
 
 
-@app.route('/calendar', methods=['POST'])
+@app.route('/calendar/submit', methods=['POST'])
 def challenge_calendar_submit():
+    uid, cid, year, month = session['uid'], \
+                            session['cid'], \
+                            session['year'], \
+                            session['month']
+    day, action = request.form.get('day'), request.form.get('action')
+
+    date_string = '-'.join(str(date_part) for date_part in (year, month, day))
+
+    date_id = (uid, cid, date_string)
+    control = Connector(app.config['database'])
+
+    if action == 'delete':
+        control.delete_challenge_event(*date_id)
+    elif action == 'insert':
+        control.insert_challenge_event(*date_id)
+
+    return redirect(url_for('challenge_calendar_show', cid=cid))
+
+
+@app.route('/calendar', methods=['POST'])
+def challenge_calendar_startup():
     cid = request.form.get('cid')
     uid = request.form.get('uid')
-
-    if session.get('uid') == uid:
-
-        do_type = request.form.get('modify')
-        date_id = (uid, cid, request.form.get('date'))
-        control = Connector(app.config['database'])
-
-        if do_type == 'delete':
-            control.delete_challenge_event(*date_id)
-        elif do_type == 'insert':
-            control.insert_challenge_event(*date_id)
 
     if uid and cid:
         session['uid'] = uid
 
-    return redirect(url_for('challenge_calendar', cid=cid))
+    return redirect(url_for('challenge_calendar_show', cid=cid))
 
 
-@app.route('/calendar/challenge=<cid>', methods=['GET'])
-def challenge_calendar(cid):
+@app.route('/calendar/<cid>', methods=['GET'])
+def challenge_calendar_show(cid):
     uid = session.get('uid')
     if not uid:
         abort(401)
@@ -57,10 +69,23 @@ def challenge_calendar(cid):
     dates = channel.fetch_challenge_events(uid, cid)
     points = len(dates)
 
-    month = maybe_month(request.args.get('month'))
     year = maybe_year(request.args.get('year'))
+    if not year:
+        year = session['year']
+    if not year:
+        year = datetime.today().year
 
-    cal = calender_html(month, year, events=dates)
+    month = maybe_month(request.args.get('month'))
+    if not month:
+        month = session['month']
+    if not month:
+        month = datetime.today().month
+
+    session['year'] = year
+    session['month'] = month
+    session['cid'] = cid
+
+    cal = calender_html(events=dates, year=year, month=month)
 
     return render_template('index.html',
                            name=challenge_name,

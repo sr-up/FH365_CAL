@@ -3,8 +3,22 @@
 import calendar
 from datetime import datetime
 
+from flask import url_for
 
-def calender_html(month: int = None, year: int = None, events: list = None):
+
+def calender_html(month: int, year: int, events: list = None):
+    def make_button(action_type, day, day_string):
+        action = '<input type="hidden" name="action" value="%s">' % action_type
+        form = ['<form action="%s" method="post">' % url_for('challenge_calendar_submit'),
+                '</form>']
+        button = ['<button'
+                  ' type="submit"'
+                  ' value="%s"'
+                  ' name="day">' % day,
+                  '</button>']
+        day_string = form[0] + action + button[0] + day_string + button[1] + form[1]
+        return day_string
+
     class FITCalendar(calendar.HTMLCalendar):
         """"
         Creates a monthly calendar to track date events
@@ -12,19 +26,12 @@ def calender_html(month: int = None, year: int = None, events: list = None):
 
         def __init__(self,
                      current_day: int,
-                     the_month: int,
-                     the_year: int,
                      event_dates: list = None,
                      event_color='#9e1f63'):
             super().__init__(calendar.SUNDAY)
             self._current_day = current_day
-            self._month = the_month
-            self._year = the_year
             self._event_dates = event_dates if event_dates else list()
             self._event_color = event_color
-
-        def generate(self):
-            return self.formatmonth(self._year, self._month)
 
         def formatweekday(self, day):
             """
@@ -45,18 +52,19 @@ def calender_html(month: int = None, year: int = None, events: list = None):
                 else '%d' % day
 
         def make_day_cell(self, day, weekday, day_string):
-            if day == 0:
-                # day outside month
+            if day == 0:  # day outside month
                 return '<td class="%s" bg>&nbsp;</td>' % self.cssclass_noday
             elif day in self._event_dates:
+                button = make_button("delete", day, day_string)
                 return '<td class="%s" bgcolor="%s">%s</td>' % (
                     self.cssclasses[weekday],
                     self._event_color,
-                    day_string)
+                    button)
             else:
+                button = make_button("insert", day, day_string)
                 return '<td class="%s">%s</td>' % (
                     self.cssclasses[weekday],
-                    day_string)
+                    button)
 
         def formatmonth(self, theyear, themonth, withyear=True):
             """
@@ -80,19 +88,19 @@ def calender_html(month: int = None, year: int = None, events: list = None):
 
     current_date = datetime.today()
 
-    if not year:
-        year = current_date.year
-    if not month:
-        month = current_date.month
+    if events:
+        completed_days = events_during(events, year, month)
+    else:
+        completed_days = None
 
     if current_date.year == year and current_date.month == month:
         today = current_date.day
     else:
         today = None
+    html_calender = FITCalendar(today, completed_days)
+    return html_calender.formatmonth(year, month)
 
-    if events:
-        completed_days = [d.day for d in events if d.month == month and d.year == year]
-    else:
-        completed_days = None
 
-    return FITCalendar(today, month, year, completed_days).generate()
+def events_during(events, year, month):
+    completed_days = [d.day for d in events if d.month == month and d.year == year]
+    return completed_days
