@@ -46,10 +46,8 @@ def challenge_calendar_submit():
 def challenge_calendar_startup():
     cid = request.form.get('cid')
     uid = request.form.get('uid')
-
     if uid and cid:
         session['uid'] = uid
-
     return redirect(url_for('challenge_calendar_show', cid=cid))
 
 
