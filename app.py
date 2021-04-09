@@ -71,15 +71,11 @@ def challenge_calendar_show(cid):
 
     year = maybe_year(request.args.get('year'))
     if not year:
-        year = session.get('year')
-    if not year:
-        year = datetime.today().year
+        year = session.get('year', datetime.today().year)
 
     month = maybe_month(request.args.get('month'))
     if not month:
-        month = session.get('month')
-    if not month:
-        month = datetime.today().month
+        month = session.get('month', datetime.today().month)
 
     session['year'] = year
     session['month'] = month
