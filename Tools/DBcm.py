@@ -94,6 +94,14 @@ class Connector:
             dates = flatten(rows)
             return dates
 
+    def fetch_workplace_id(self, uid: int) -> list:
+        with ConnectDatabase(self._config) as cursor:
+            _SQL = 'SELECT workplace_id ' \
+                   'FROM person1 ' \
+                   'WHERE id = %s'
+            cursor.execute(_SQL, (uid,))
+            return cursor.fetchone()[0]
+
     def delete_challenge_event(self, uid: int, cid: int, date: str):
         with BeginDatabase(self._config) as cursor:
             _SQL = 'DELETE FROM challenge_event ' \

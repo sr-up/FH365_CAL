@@ -7,7 +7,11 @@
         <div style="display: table-row">
             <div style="width: 600px; display: table-cell;">
                 <h1>{{ name }}</h1>
-                <p>{{ description }}</p>
+                {% if description is not none %}
+                    <p>{{ description }}</p>
+                {% else %}
+                    <br>
+                {% endif %}
             </div>
             <div style="display: table-cell;">
                 <h2>Days complete: {{ points }}</h2>

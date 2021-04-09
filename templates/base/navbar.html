@@ -14,7 +14,10 @@
         </div>
         <div class="navbar-collapse collapse">
             <ul class="nav navbar-nav">
-                <li><a href="/">Home</a></li>
+                <li>{{ landing_page_link() | safe }}</li>
+                <li>{{ challenge_page_link() | safe }}</li>
+                <li>{{ habit_page_link() | safe }}</li>
+                <li>{{ leader_board_link(wid,cid) | safe }}</li>
             </ul>
         </div>
     </div>

@@ -59,7 +59,7 @@ def challenge_calendar_show(cid):
     if not uid:
         abort(401)
     channel = Connector(app.config['database'])
-
+    wid = channel.fetch_workplace_id(uid)
     header = channel.fetch_challenge_header(cid)
     habits = channel.fetch_challenge_habits(uid, cid)
     challenge_name, challenge_description = header \
@@ -93,7 +93,8 @@ def challenge_calendar_show(cid):
                            points=points,
                            calendar=cal,
                            uid=uid,
-                           cid=cid, )
+                           cid=cid,
+                           wid=wid, )
 
 
 def maybe_year(to_test):
@@ -150,6 +151,27 @@ def page_not_found(e):
 def internal_server_error(e):
     return render_template('error/500.html',
                            error=e.description), 500
+
+
+@app.context_processor
+def external_linker():
+    def leader_board_link(wid, cid):
+        link = '<a href="http://localhost/LeaderBoard.php?wid=%s&cid=%s">Leader Board</a>' % (wid, cid)
+        return link
+
+    def landing_page_link():
+        return '<a href="http://localhost/landingPage.php">Main Page</a>'
+
+    def challenge_page_link():
+        return '<a href="http://localhost/Challenges.php">Challenge</a>'
+
+    def habit_page_link():
+        return '<a href="http://localhost/Habit.php">Habit</a>'
+
+    return dict(leader_board_link=leader_board_link,
+                landing_page_link=landing_page_link,
+                challenge_page_link=challenge_page_link,
+                habit_page_link=habit_page_link, )
 
 
 if __name__ == '__main__':
