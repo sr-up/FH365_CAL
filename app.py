@@ -164,10 +164,14 @@ def external_linker():
     def habit_page_link():
         return '<a href="http://localhost/Habit.php">Habit</a>'
 
+    def settings_page_link():
+        return '<a href="http://localhost/user_setting.php">Settings</a>'
+
     return dict(leader_board_link=leader_board_link,
                 landing_page_link=landing_page_link,
                 challenge_page_link=challenge_page_link,
-                habit_page_link=habit_page_link, )
+                habit_page_link=habit_page_link,
+                settings_page_link=settings_page_link, )
 
 
 if __name__ == '__main__':
